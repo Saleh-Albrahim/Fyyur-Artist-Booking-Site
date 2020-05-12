@@ -4,6 +4,7 @@
 
 
 import json
+import sys
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
@@ -42,8 +43,11 @@ class Locations(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     city = db.Column(db.String(120), primary_key=True)
     state = db.Column(db.String(120), primary_key=True)
-    venues = db.relationship('venues', backref='location')
-    artist = db.relationship('artist', backref='location')
+    venues = db.relationship('Venues', backref='venues')
+    artist = db.relationship('Artist', backref='artist')
+
+    def __repr__(self):
+        return f' {self.city} {self.state}'
 
 
 class Show(db.Model):
@@ -67,9 +71,9 @@ class Venues(db.Model):
     website = db.Column(db.String(500))
     genres = db.Column(PickleType)
     seeking_talent = db.Column(db.Boolean)
-    seeking_description = db.Column(db.Boolean)
+    seeking_description = db.Column(db.String(800))
     facebook_link = db.Column(db.String(120))
-    show = db.relationship('show', backref='venue')
+    show = db.relationship('Show', backref='venue')
 
 
 class Artist(db.Model):
@@ -82,7 +86,7 @@ class Artist(db.Model):
     genres = db.Column(PickleType)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    show = db.relationship('show', backref='artist')
+    show = db.relationship('Show', backref='artist')
 # TODO: implement any missing fields, as a database migration using Flask-Migratef
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
@@ -257,38 +261,51 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-    name = request.form['name']
-    city = request.form['city']
-    state = request.form['state']
-    address = request.form['address']
-    phone = request.form['phone']
-    genres = request.form.getlist('genres')
-    facebook = request.form['facebook_link']
-    website = request.form['website']
-    image_link = request.form['image_link']
-    seeking_talent = request.form['seeking_talent']
-    print(request.form['seeking_talent'])
-    seeking_description = request.form['seeking_description']
-    # check if this city & state is added before if yes get the id
-    getlocation = Locations.query.filter_by(city=city, state=state).first()
-    if getlocation is None:
-        newLocation = Locations(city=city, state=state)
-        db.session.add(newLocation)
-        db.session.commit()
+    error = False
+    try:
+        name = request.form['name']
+        city = request.form['city']
+        state = request.form['state']
+        address = request.form['address']
+        phone = request.form['phone']
+        genres = request.form.getlist('genres')
+        facebook = request.form['facebook_link']
+        website = request.form['website']
+        image_link = request.form['image_link']
+        if request.form['seeking_talent'] == 'y':
+            seeking_talent = True
+        else:
+            seeking_talent = False
+        seeking_description = request.form['seeking_description']
+
+        # check if this city & state is added before if yes get the id
         getlocation = Locations.query.filter_by(city=city, state=state).first()
-    Location_id = getlocation.id
+        print("city here", getlocation)
+        if getlocation is None:
+            newLocation = Locations(city=city, state=state)
+            db.session.add(newLocation)
+            db.session.commit()
+            getlocation = Locations.query.filter_by(
+                city=city, state=state).first()
+        Location_id = getlocation.id
 
-    newVenues = Venues(name=name, Location_id=Location_id,
-                       address=address, phone=phone, genres=genres, facebook=facebook)
+        # insert the new venue
+        newVenues = Venues(name=name, Location_id=Location_id,
+                           address=address, phone=phone, genres=genres, facebook_link=facebook,
+                           website=website, image_link=image_link, seeking_talent=seeking_talent, seeking_description=seeking_description)
+        db.session.add(newVenues)
+        db.session.commit()
+    except:
+        error = True
+        print(sys.exc_info())
+    finally:
+        db.session.close()
 
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
+    if error:
+        flash('An error occurred. Venue ' + name + ' could not be listed.')
+    else:
+        flash('Venues was successfully listed!')
 
-    # on successful db insert, flash success
-    flash('Venue ' + request.form['name'] + ' was successfully listed!')
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
     return render_template('pages/home.html')
 
 

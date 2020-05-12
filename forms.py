@@ -91,7 +91,6 @@ class ShowForm(Form):
         validators=[DataRequired()],
         default=datetime.today()
     )
-    print(artist_id, venue_id, start_time)
 
 
 class VenueForm(Form):
