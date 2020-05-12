@@ -14,6 +14,7 @@ from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
 from datetime import datetime
+from sqlalchemy.types import PickleType
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -62,11 +63,9 @@ class Venues(db.Model):
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
-    Genres = db.Column(db.String(120))
+    Genres = db.Column(PickleType)
     facebook_link = db.Column(db.String(120))
     show = db.relationship('show', backref='venue')
-
-# TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 
 class Artist(db.Model):
@@ -256,6 +255,27 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
+    name = request.form['name']
+    city = request.form['city']
+    state = request.form['state']
+    address = request.form['address']
+    phone = request.form['phone']
+    # print(request.form['image_link'])
+    genres = request.form.getlist('genres')
+    facebook = request.form['facebook_link']
+
+    # check if this city & state is added before if yes get the id
+    getlocation = Locations.query.filter_by(city=city, state=state).first()
+    if getlocation is None:
+        newLocation = Locations(city=city, state=state)
+        db.session.add(newLocation)
+        db.session.commit()
+        getlocation = Locations.query.filter_by(city=city, state=state).first()
+    Location_id = getlocation.id
+
+    newVenues = Venues(name=name, Location_id=Location_id,
+                       address=address, phone=phone)
+
     # TODO: insert form data as a new Venue record in the db, instead
     # TODO: modify data to be the data object returned from db insertion
 
@@ -525,13 +545,21 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-    # called to create new shows in the db, upon submitting new show listing form
-    # TODO: insert form data as a new Show record in the db, instead
+    error = False
+    try:
+        artist_id = request.form['artist_id']
+        venue_id = request.form['venue_id']
+        start_time = request.form['start_time']
+        show = Show(artist_ID=artist_id, venue_ID=venue_id,
+                    start_time=start_time)
+        db.session.add(show)
+        db.session.commit()
+    except:
+        error = True
+        flash('An error occurred. Show could not be listed.')
 
-    # on successful db insert, flash success
-    flash('Show was successfully listed!')
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Show could not be listed.')
+    if not error:
+        flash('Show was successfully listed!')
     # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
     return render_template('pages/home.html')
 
@@ -565,10 +593,3 @@ if not app.debug:
 if __name__ == '__main__':
     app.debug = True
     app.run()
-
-# Or specify port manually:
-'''
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
-'''
