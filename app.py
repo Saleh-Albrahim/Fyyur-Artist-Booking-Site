@@ -137,7 +137,6 @@ def index():
 
 @app.route('/venues')
 def venues():
-    # TODO: replace with real venues data.
     all_location = Locations.query.all()
     data = []
     for location in all_location:
@@ -147,7 +146,7 @@ def venues():
             venueList.append({"id": v.id,
                               "name": v.name,
                               "num_upcoming_shows": len(Show.query.filter(Show.venue_ID == v.id)
-                                                        .filter(Show.start_time > datetime.now()).all())})
+                                                        .filter(Show.start_time >= datetime.now()).all())})
         data.append(
             {"city": location.city, "state": location.state, "venues": venueList})
     # num_shows should be aggregated based on number of upcoming shows per venue.
@@ -157,16 +156,21 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for Hop should return "The Musical Hop".
-    # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    search_term = request.form.get('search_term')
+    # source https://stackoverflow.com/questions/3325467/
+    tag = f"%{search_term}%"
+    answers = Venues.query.filter(Venues.name.like(tag)).all()
+    data = []
+    for d in answers:
+        data.append({
+            "id": d.id,
+            "name": d.name,
+            "num_upcoming_shows": len(Show.query.filter(Show.venue_ID == d.id)
+                                      .filter(Show.start_time >= datetime.now()).all())
+        })
     response = {
-        "count": 1,
-        "data": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
+        "count": len(data),
+        "data": data
     }
     return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -299,16 +303,21 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-    # search for "band" should return "The Wild Sax Band".
+    search_term = request.form.get('search_term')
+    # source https://stackoverflow.com/questions/3325467/
+    tag = f"%{search_term}%"
+    answers = Artist.query.filter(Artist.name.like(tag)).all()
+    data = []
+    for d in answers:
+        data.append({
+            "id": d.id,
+            "name": d.name,
+            "num_upcoming_shows": len(Show.query.filter(Show.artist_ID == d.id)
+                                      .filter(Show.start_time >= datetime.now()).all())
+        })
     response = {
-        "count": 1,
-        "data": [{
-            "id": 4,
-            "name": "Guns N Petals",
-            "num_upcoming_shows": 0,
-        }]
+        "count": len(data),
+        "data": data
     }
     return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -472,23 +481,15 @@ def create_artist_submission():
 
     return render_template('pages/home.html')
 
-    # on successful db insert, flash success
-    flash('Artist ' + request.form['name'] + ' was successfully listed!')
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-    return render_template('pages/home.html')
-
 
 #  Shows
 #  ----------------------------------------------------------------
 
 @app.route('/shows')
 def shows():
-    # displays list of shows at /shows
-    # TODO: replace with real venues data.
     showsData = Show.query.with_entities(Show.venue_ID, Venues.name.label('venues_name'), Show.artist_ID, Artist.name.label('artist_name'), Artist.image_link, Show.start_time).join(
         Artist).join(Venues).filter(Show.venue_ID == Venues.id).filter(Show.artist_ID == Venues.id).all()
-    #       num_shows should be aggregated based on number of upcoming shows per venue.
+
     data = []
     for d in showsData:
         print(d)
@@ -505,7 +506,6 @@ def shows():
 
 @app.route('/shows/create')
 def create_shows():
-    # renders form. do not touch.
     form = ShowForm()
     return render_template('forms/new_show.html', form=form)
 
