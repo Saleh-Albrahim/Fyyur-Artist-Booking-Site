@@ -1,9 +1,17 @@
 from datetime import datetime
+import re
 from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField, TextAreaField
-from wtforms.validators import DataRequired, AnyOf, URL, Length, Regexp
+from wtforms.validators import DataRequired, AnyOf, URL, Length, ValidationError, Regexp
 
-genres_choices = [
+
+def testRegexpPhone(form, field):
+    # source  https://gist.github.com/homaily/8672499
+    if not re.search(r"/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/", field.data):
+        raise ValidationError("Wrong Phone number")
+
+
+genres_data = [
     ('Alternative', 'Alternative'),
     ('Blues', 'Blues'),
     ('Classical', 'Classical'),
@@ -24,7 +32,7 @@ genres_choices = [
     ('Soul', 'Soul'),
     ('Other', 'Other'),
 ]
-state_choices = [
+state_data = [
     ('AL', 'AL'),
     ('AK', 'AK'),
     ('AZ', 'AZ'),
@@ -105,11 +113,11 @@ class VenueForm(Form):
     )
     state = SelectField(
         'state', validators=[DataRequired()],
-        choices=state_choices
+        choices=state_data
     )
     phone = StringField(
-        # source  https://gist.github.com/homaily/8672499
-        'phone', validators=[Regexp("/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/")]
+
+        'phone', validators=[testRegexpPhone]
     )
     image_link = StringField(
         'image_link'
@@ -117,7 +125,7 @@ class VenueForm(Form):
     genres = SelectMultipleField(
         # TODO implement enum restriction
         'genres', validators=[DataRequired()],
-        choices=genres_choices
+        choices=genres_data
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]
@@ -143,12 +151,10 @@ class ArtistForm(Form):
     )
     state = SelectField(
         'state', validators=[DataRequired()],
-        choices=state_choices
+        choices=state_data
     )
     phone = StringField(
-        # TODO implement validation logic for state
-        # source  https://gist.github.com/homaily/8672499
-        'phone', validators=[Regexp("/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/")]
+        'phone', validators=[testRegexpPhone]
     )
     image_link = StringField(
         'image_link'
@@ -156,7 +162,7 @@ class ArtistForm(Form):
     genres = SelectMultipleField(
         # TODO implement enum restriction
         'genres', validators=[DataRequired()],
-        choices=genres_choices
+        choices=genres_data
     )
     facebook_link = StringField(
         # TODO implement enum restriction
