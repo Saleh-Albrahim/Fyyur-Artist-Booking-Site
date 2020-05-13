@@ -41,8 +41,8 @@ class Locations(db.Model):
     __tablename__ = 'locations'
     __table_args__ = (db.UniqueConstraint('city', 'state'),)
     id = db.Column(db.Integer, primary_key=True)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    city = db.Column(db.String())
+    state = db.Column(db.String())
     venues = db.relationship(
         'Venues', backref='locations')
     artist = db.relationship(
@@ -70,14 +70,14 @@ class Venues(db.Model):
     name = db.Column(db.String)
     Location_id = db.Column(db.Integer, db.ForeignKey(
         'locations.id'), nullable=False)
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    website = db.Column(db.String(500))
+    address = db.Column(db.String())
+    phone = db.Column(db.String())
+    image_link = db.Column(db.String())
+    website = db.Column(db.String())
     genres = db.Column(PickleType)
     seeking_talent = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(800))
-    facebook_link = db.Column(db.String(120))
+    seeking_description = db.Column(db.String())
+    facebook_link = db.Column(db.String())
     show = db.relationship('Show', backref='venues')
 
     def __repr__(self):
@@ -87,16 +87,16 @@ class Venues(db.Model):
 class Artist(db.Model):
     __tablename__ = 'artist'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(500))
+    name = db.Column(db.String())
     Location_id = db.Column(db.Integer, db.ForeignKey(
         'locations.id'), nullable=False)
-    phone = db.Column(db.String(120))
+    phone = db.Column(db.String())
     genres = db.Column(PickleType)
-    image_link = db.Column(db.String(500))
-    website = db.Column(db.String(500))
+    image_link = db.Column(db.String())
+    website = db.Column(db.String())
     seeking_venue = db.Column(db.Boolean)
-    facebook_link = db.Column(db.String(120))
-    seeking_description = db.Column(db.String(800))
+    facebook_link = db.Column(db.String())
+    seeking_description = db.Column(db.String())
     show = db.relationship('Show', backref='artist')
 
     def __repr__(self):
