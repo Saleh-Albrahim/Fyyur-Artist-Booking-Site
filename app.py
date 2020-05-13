@@ -41,10 +41,12 @@ class Locations(db.Model):
     __tablename__ = 'locations'
     __table_args__ = (db.UniqueConstraint('city', 'state'),)
     id = db.Column(db.Integer, primary_key=True)
-    city = db.Column(db.String(120), primary_key=True)
-    state = db.Column(db.String(120), primary_key=True)
-    venues = db.relationship('Venues', backref='venues')
-    artist = db.relationship('Artist', backref='artist')
+    city = db.Column(db.String(120))
+    state = db.Column(db.String(120))
+    venues = db.relationship(
+        'Venues', backref='locations')
+    artist = db.relationship(
+        'Artist', backref='locations')
 
     def __repr__(self):
         return f' {self.city} {self.state}'
@@ -57,6 +59,9 @@ class Show(db.Model):
     venue_ID = db.Column(db.Integer, db.ForeignKey(
         'venues.id'), primary_key=True)
     start_time = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f' {self.artist_ID} {self.venue_ID} {self.start_time}'
 
 
 class Venues(db.Model):
@@ -73,7 +78,7 @@ class Venues(db.Model):
     seeking_talent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(800))
     facebook_link = db.Column(db.String(120))
-    show = db.relationship('Show', backref='venue')
+    show = db.relationship('Show', backref='venues')
 
     def __repr__(self):
         return f' {self.name} {self.id}'
@@ -82,7 +87,7 @@ class Venues(db.Model):
 class Artist(db.Model):
     __tablename__ = 'artist'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    name = db.Column(db.String(500))
     Location_id = db.Column(db.Integer, db.ForeignKey(
         'locations.id'), nullable=False)
     phone = db.Column(db.String(120))
@@ -93,6 +98,9 @@ class Artist(db.Model):
     facebook_link = db.Column(db.String(120))
     seeking_description = db.Column(db.String(800))
     show = db.relationship('Show', backref='artist')
+
+    def __repr__(self):
+        return f' {self.id} {self.name} {self.Location_id} {self.website}'
 # TODO: implement any missing fields, as a database migration using Flask-Migratef
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
@@ -165,52 +173,50 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
 
-    # shows the venue page with the given venue_id
-    v = Venues.query.join(Locations)\
-        .filter(Venues.Location_id == Locations.id).filter(Venues.id == venue_id).first()
-
-    past_showsData = Show.query.filter_by(venue_ID=venue_id)\
-        .filter(Show.start_time < datetime.now()).join(Artist).all()
+    past_showsData = Show.query.with_entities(Show.artist_ID, Artist.name, Artist.image_link, Show.start_time).join(Artist).filter(
+        Show.venue_ID == venue_id).filter(Show.start_time < datetime.now()).all()
     past_shows = []
+    print("welcome wsaedwdwwqa", past_showsData)
 
     for p in past_showsData:
-        past_shows.append({"artist_id": p.artist.id,
-                           "artist_name": p.artist.name,
+        print("welcome 2 wsaedwdwwqa", p)
+        past_shows.append({"artist_id": p.artist_ID,
+                           "artist_name": p.name,
                            "artist_image_link": p.image_link,
-                           "start_time": p.start_time})
+                           "start_time": p.start_time.strftime("%Y-%m-%d %H:%M:%S")})
 
-    upcoming_showsData = Show.query.filter_by(venue_ID=venue_id)\
-        .filter(Show.start_time >= datetime.now()).join(Artist).all()
+    upcoming_showsData = db.session.query(Show).join(Artist).filter(
+        Show.venue_ID == venue_id).filter(Show.start_time >= datetime.now()).all()
 
     upcoming_shows = []
     for u in upcoming_showsData:
-        past_shows.append({"artist_id": p.artist.id,
-                           "artist_name": p.name,
-                           "artist_image_link": p.image_link,
-                           "start_time": p.start_time})
-
+        past_shows.append({"artist_id": u.artist.id,
+                           "artist_name": u.name,
+                           "artist_image_link": u.image_link,
+                           "start_time": u.start_time.strftime("%Y-%m-%d %H:%M:%S")})
+ # shows the venue page with the given venue_id
+    v = Locations.query.join(Venues)\
+        .filter(Locations.id == Venues.Location_id).filter(Venues.id == venue_id).first()
     new_venue = {
-        "id": v.id,
-        "name": v.name,
-        "genres": v.genres,
-        "address": v.address,
+        "id": v.venues[0].id,
+        "name": v.venues[0].name,
+        "genres": v.venues[0].genres,
+        "address": v.venues[0].address,
         "city": v.city,
         "state": v.state,
-        "phone": v.phone,
-        "website": v.website,
-        "facebook_link": v.facebook_link,
-        "seeking_talent": v.seeking_talent,
-        "seeking_description": v.seeking_description,
-        "image_link": v.image_link,
+        "phone": v.venues[0].phone,
+        "website": v.venues[0].website,
+        "facebook_link": v.venues[0].facebook_link,
+        "seeking_talent": v.venues[0].seeking_talent,
+        "seeking_description": v.venues[0].seeking_description,
+        "image_link": v.venues[0].image_link,
         "past_shows": past_shows,
         "upcoming_shows": upcoming_showsData,
         "past_shows_count": len(past_shows),
         "upcoming_shows_count": len(upcoming_showsData),
     }
 
-    data = list(filter(lambda d: d['id'] ==
-                       venue_id, [data2, data3]))[0]
-    return render_template('pages/show_venue.html', venue=data)
+    return render_template('pages/show_venue.html', venue=new_venue)
 
 #  Create Venue
 #  ----------------------------------------------------------------
@@ -243,7 +249,6 @@ def create_venue_submission():
 
         # check if this city & state is added before if yes get the id
         getlocation = Locations.query.filter_by(city=city, state=state).first()
-        print("city here", getlocation)
         if getlocation is None:
             newLocation = Locations(city=city, state=state)
             db.session.add(newLocation)
