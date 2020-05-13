@@ -97,6 +97,9 @@ class ShowForm(Form):
 
 
 class VenueForm(Form):
+
+    genres_edit = []
+
     name = StringField(
         'name', validators=[DataRequired()]
     )
@@ -169,6 +172,5 @@ class ArtistForm(Form):
     )
     seeking_venue = BooleanField()
     seeking_description = TextAreaField(
-        'seeking_description', validators=[DataRequired()]
+        'seeking_description', default="please add content",  validators=[DataRequired()]
     )
-

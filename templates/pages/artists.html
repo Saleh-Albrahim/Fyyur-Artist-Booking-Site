@@ -5,9 +5,9 @@
 	{% for artist in artists %}
 	<li>
 		<a href="/artists/{{ artist.id }}">
-			<i class="fas fa-users"></i>
+			<i class="fas fa-users" style="color:black;"></i>
 			<div class="item">
-				<h5>{{ artist.name }}</h5>
+				<h5 style="color:black;">{{ artist.name }}</h5>
 		</a>
 		<a href="/artists/{{ artist.id }}/edit"><button type="button" class="btn btn-primary btn-sm">Update</button></a>
 		<a href="/artists/{{ artist.id }}/delete"><button type="button"
