@@ -3,17 +3,25 @@
 {% block content %}
 {% for area in areas %}
 <h3>{{ area.city }}, {{ area.state }}</h3>
-	<ul class="items">
-		{% for venue in area.venues %}
-		<li>
-			<a href="/venues/{{ venue.id }}">
+<ul class="items">
+	{% for venue in area.venues %}
+	<li>
+		<a href="/venues/{{ venue.id }}">
+
+
+			<div class="item">
 				<i class="fas fa-music"></i>
-				<div class="item">
-					<h5>{{ venue.name }}</h5>
-				</div>
-			</a>
-		</li>
-		{% endfor %}
-	</ul>
+				<h5>{{ venue.name }}</h5>
+
+
+		</a>
+		<a href="/venues/{{ venue.id }}/edit"><button type="button" class="btn btn-primary btn-sm">Update</button></a>
+		<a href="/venues/{{ venue.id }}/delete"><button type="button" class="btn btn-danger btn-sm">Delete</button></a>
+		</div>
+	</li>
+	{% endfor %}
+</ul>
+
+
 {% endfor %}
 {% endblock %}

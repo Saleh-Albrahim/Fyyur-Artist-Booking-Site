@@ -3,12 +3,7 @@ import re
 from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField, TextAreaField
 from wtforms.validators import DataRequired, AnyOf, URL, Length, ValidationError, Regexp
-
-
-def testRegexpPhone(form, field):
-    # source  https://gist.github.com/homaily/8672499
-    if not re.search(r"/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/", field.data):
-        raise ValidationError("Wrong Phone number")
+import enum
 
 
 genres_data = [
@@ -116,14 +111,13 @@ class VenueForm(Form):
         choices=state_data
     )
     phone = StringField(
-
-        'phone', validators=[testRegexpPhone]
+        #  source  https://gist.github.com/homaily/8672499
+        'phone', validators=[DataRequired(), Regexp(r"/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/", message="Wrong Phone number")]
     )
     image_link = StringField(
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices=genres_data
     )
@@ -154,18 +148,17 @@ class ArtistForm(Form):
         choices=state_data
     )
     phone = StringField(
-        'phone', validators=[testRegexpPhone]
+        #  source  https://gist.github.com/homaily/8672499
+        'phone', validators=[DataRequired(), Regexp(r"/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/", message="Wrong Phone Number")]
     )
     image_link = StringField(
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices=genres_data
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         'facebook_link', validators=[URL()]
     )
     website = StringField(
@@ -179,4 +172,3 @@ class ArtistForm(Form):
         'seeking_description', validators=[DataRequired()]
     )
 
-# TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
