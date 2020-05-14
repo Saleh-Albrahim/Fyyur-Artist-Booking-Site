@@ -117,9 +117,6 @@ class VenueForm(Form):
         #  source  https://gist.github.com/homaily/8672499
         'phone', validators=[DataRequired(), Regexp(r"/^(009665|9665|\+9665|05|5)(5|0|3|6|4|9|1|8|7)([0-9]{7})$/", message="Wrong Phone number")]
     )
-    image_link = StringField(
-        'image_link'
-    )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired()],
         choices=genres_data
@@ -172,5 +169,5 @@ class ArtistForm(Form):
     )
     seeking_venue = BooleanField()
     seeking_description = TextAreaField(
-        'seeking_description', default="please add content",  validators=[DataRequired()]
+        'seeking_description',  validators=[DataRequired()]
     )

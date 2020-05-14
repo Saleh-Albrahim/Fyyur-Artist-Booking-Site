@@ -7,7 +7,15 @@ import json
 import sys
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    request,
+    Response,
+    flash,
+    redirect,
+    url_for
+)
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
@@ -142,8 +150,9 @@ def venues():
                               "name": v.name,
                               "num_upcoming_shows": len(Show.query.filter(Show.venue_ID == v.id)
                                                         .filter(Show.start_time >= datetime.now()).all())})
-        data.append(
-            {"city": location.city, "state": location.state, "venues": venueList})
+        if len(venueList) != 0:
+            data.append(
+                {"city": location.city, "state": location.state, "venues": venueList})
     # num_shows should be aggregated based on number of upcoming shows per venue.
 
     return render_template('pages/venues.html', areas=data)
@@ -386,8 +395,8 @@ def search_artists():
 def show_artist(artist_id):
     past_showsData = Show.query.with_entities(Show.artist_ID, Venues.name, Venues.image_link, Show.start_time).join(Venues).filter(
         Show.artist_ID == artist_id).filter(Show.start_time < datetime.now()).all()
-    past_shows = []
 
+    past_shows = []
     for p in past_showsData:
         past_shows.append({"artist_ID": p.artist_ID,
                            "venue_name": p.name,
@@ -419,6 +428,10 @@ def show_artist(artist_id):
         "seeking_venue": r.seeking_venue,
         "seeking_description": r.seeking_description,
         "image_link": r.image_link,
+        "past_shows": past_shows,
+        "upcoming_shows": upcoming_shows,
+        "upcoming_shows_count": len(upcoming_shows),
+        "past_shows_count": len(past_shows),
     }
 
     return render_template('pages/show_artist.html', artist=new_artist)
